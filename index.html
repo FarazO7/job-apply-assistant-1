@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Application Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#F6F6F4; --surface:#FFFFFF; --ink:#1A1A1E; --muted:#6B6B73; --line:#E6E5E1;
+    --accent:#2B4FE0;
+    --ok:#0E9F6E; --ok-bg:#ECFDF3;
+    --warn:#B45309; --warn-bg:#FFFBEB;
+    --site:#0B69A3; --site-bg:#EFF6FF;
+    --sched:#5B45E0; --sched-bg:#EEF0FF;
+    --done:#71717A; --done-bg:#F3F3F2;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(26,26,30,.05), 0 6px 22px rgba(26,26,30,.05);
+    --t:180ms cubic-bezier(.2,.7,.3,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{background:var(--bg); color:var(--ink); font-family:"Inter",system-ui,sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:920px; margin:0 auto; padding:0 24px 96px;}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:22px 0 20px; border-bottom:1px solid var(--line); margin-bottom:28px; position:sticky; top:0; background:var(--bg); z-index:20;}
+  .brand{display:flex; align-items:baseline; gap:10px;}
+  .brand h1{font-family:"Space Grotesk",sans-serif; font-weight:700; font-size:20px; letter-spacing:-.01em; margin:0;}
+  .brand .dot{width:8px; height:8px; border-radius:50%; background:var(--accent); transform:translateY(-2px);}
+  .brand small{font-family:"IBM Plex Mono",monospace; color:var(--muted); font-size:12px;}
+  .bar-actions{display:flex; gap:8px;}
+
+  button{font-family:inherit; cursor:pointer; border:none; transition:background var(--t), border-color var(--t), opacity var(--t), transform var(--t);}
+  button:active{transform:translateY(1px);}
+  .btn{display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 14px; border-radius:10px; font-size:14px; font-weight:500;}
+  a.btn{text-decoration:none;}
+  .btn svg{width:16px; height:16px;}
+  .btn-primary{background:var(--ink); color:#fff;}
+  .btn-primary:hover{background:#34343b;}
+  .btn-ghost{background:transparent; color:var(--ink); border:1px solid var(--line);}
+  .btn-ghost:hover{background:#efeeec;}
+  .btn-quiet{background:transparent; color:var(--muted); height:34px; padding:0 10px; border-radius:8px; font-size:13px;}
+  .btn-quiet:hover{background:#efeeec; color:var(--ink);}
+  .btn:disabled{opacity:.45; cursor:not-allowed;}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px;}
+
+  .compose{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;}
+  .compose label{font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
+  textarea, input[type=text], input[type=datetime-local]{width:100%; font-family:inherit; font-size:14px; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px; transition:border-color var(--t), box-shadow var(--t); resize:vertical;}
+  textarea:focus, input[type=text]:focus, input[type=datetime-local]:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(43,79,224,.12);}
+  .compose textarea{margin-top:6px; min-height:104px;}
+  .compose-row{display:flex; gap:10px; align-items:center; margin-top:12px;}
+  .compose-row input{flex:1;}
+  .hint{font-size:12.5px; color:var(--muted);}
+
+  .tabs{display:flex; gap:4px; margin:30px 0 16px; flex-wrap:wrap;}
+  .tab{background:transparent; color:var(--muted); height:34px; padding:0 13px; border-radius:999px; font-size:13.5px; font-weight:500; border:1px solid transparent;}
+  .tab:hover{background:#efeeec; color:var(--ink);}
+  .tab[aria-selected=true]{background:var(--ink); color:#fff;}
+
+  .ticket{position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px 18px 16px 22px; margin-bottom:14px; overflow:hidden;}
+  .ticket::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--done);}
+  .ticket.s-drafted::before{background:var(--ok);}
+  .ticket.s-needs_info::before{background:var(--warn);}
+  .ticket.s-scheduled::before{background:var(--sched);}
+  .ticket.s-apply_on_site::before{background:var(--site);}
+  .ticket.s-sent::before{background:var(--done);}
+  .t-head{display:flex; justify-content:space-between; align-items:flex-start; gap:14px;}
+  .t-title{font-family:"Space Grotesk",sans-serif; font-weight:500; font-size:17px; letter-spacing:-.01em;}
+  .t-title .role{color:var(--muted); font-weight:500;}
+  .t-meta{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--muted); margin-top:5px; word-break:break-all;}
+  .t-meta b{color:var(--ink); font-weight:500;}
+  .pill{font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500; letter-spacing:.02em; padding:4px 9px; border-radius:999px; white-space:nowrap; flex-shrink:0;}
+  .p-drafted{background:var(--ok-bg); color:var(--ok);}
+  .p-needs_info{background:var(--warn-bg); color:var(--warn);}
+  .p-scheduled{background:var(--sched-bg); color:var(--sched);}
+  .p-apply_on_site{background:var(--site-bg); color:var(--site);}
+  .p-sent{background:var(--done-bg); color:var(--done);}
+
+  .field{margin-top:14px;}
+  .field span{font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:5px;}
+  .field input, .field textarea{font-size:13.5px;}
+  .body-area{min-height:150px; line-height:1.55;}
+
+  .sched-banner{font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--sched); background:var(--sched-bg); border-radius:8px; padding:8px 11px; margin-top:14px;}
+  .sched-banner b{font-weight:500;}
+
+  .qa{margin-top:14px; display:flex; flex-direction:column; gap:12px;}
+  .qa-q{font-size:13px; font-weight:600; color:var(--ink); margin-bottom:5px;}
+  .qa-a{position:relative;}
+  .qa-a textarea{width:100%; min-height:62px; font-size:13.5px;}
+  .qa-a .btn-quiet{position:absolute; top:6px; right:6px; background:#fff;}
+
+  .ask{background:var(--warn-bg); border:1px solid #FCE8C3; border-radius:12px; padding:13px 14px; margin-top:14px;}
+  .ask h4{margin:0 0 2px; font-size:13px; color:#92400E;}
+  .ask p{margin:0 0 10px; font-size:12px; color:#a16207;}
+  .ask-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .ask-grid .field{margin-top:0;}
+
+  .t-actions{display:flex; gap:8px; align-items:center; margin-top:16px; flex-wrap:wrap;}
+  .t-actions.sched-row{margin-top:10px;}
+  .sched-row input{width:auto; flex:0 1 auto;}
+  .spacer{flex:1;}
+  .link{color:var(--accent); font-size:13.5px; text-decoration:none; font-weight:500;}
+  .link:hover{text-decoration:underline;}
+  .sent-note{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted); margin-top:10px;}
+
+  .empty{text-align:center; padding:64px 20px; color:var(--muted);}
+  .empty .mark{width:40px; height:40px; margin:0 auto 14px; color:var(--line);}
+  .empty h3{font-family:"Space Grotesk",sans-serif; color:var(--ink); font-weight:500; margin:0 0 6px; font-size:18px;}
+
+  .scrim{position:fixed; inset:0; background:rgba(26,26,30,.35); opacity:0; pointer-events:none; transition:opacity var(--t); z-index:40;}
+  .scrim.open{opacity:1; pointer-events:auto;}
+  .panel{position:fixed; top:0; right:0; bottom:0; width:min(460px,92vw); background:var(--surface); box-shadow:-12px 0 40px rgba(26,26,30,.16); transform:translateX(100%); transition:transform var(--t); z-index:41; display:flex; flex-direction:column;}
+  .panel.open{transform:translateX(0);}
+  .panel-head{display:flex; justify-content:space-between; align-items:center; padding:20px 22px; border-bottom:1px solid var(--line);}
+  .panel-head h2{font-family:"Space Grotesk",sans-serif; font-size:18px; margin:0; font-weight:500;}
+  .panel-body{padding:20px 22px; overflow-y:auto; flex:1;}
+  .panel-body .field{margin-top:0; margin-bottom:14px;}
+  .resume-box{border:1px dashed var(--line); border-radius:12px; padding:14px; margin-bottom:18px; background:#fbfbfa;}
+  .resume-box .span{font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
+  input[type=file]{font-size:13px; margin-top:8px; width:100%;}
+  input[type=file]::file-selector-button{font-family:inherit; font-size:13px; margin-right:10px; padding:7px 12px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer;}
+  .icon-btn{background:transparent; width:34px; height:34px; border-radius:8px; display:grid; place-items:center; color:var(--muted);}
+  .icon-btn:hover{background:#efeeec; color:var(--ink);}
+  .icon-btn svg{width:18px; height:18px;}
+
+  .toasts{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); display:flex; flex-direction:column; gap:8px; z-index:60;}
+  .toast{background:var(--ink); color:#fff; padding:11px 16px; border-radius:10px; font-size:13.5px; box-shadow:var(--shadow); animation:rise var(--t) ease;}
+  .toast.err{background:#9F1239;}
+  @keyframes rise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+
+  @media (max-width:560px){.wrap{padding:0 16px 80px;} .ask-grid{grid-template-columns:1fr;} .t-head{flex-direction:column;}}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important;}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <h1>Application Desk</h1>
+        <small id="count"></small>
+      </div>
+      <div class="bar-actions">
+        <button class="btn btn-ghost" id="alertsBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>
+          Check alerts
+        </button>
+        <button class="btn btn-ghost" id="profileBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </button>
+      </div>
+    </header>
+
+    <section class="compose">
+      <label for="postText">Paste a hiring post</label>
+      <textarea id="postText" placeholder="Paste the post (with where to send your resume). A public link works too; if it's gated you'll be asked to paste the text."></textarea>
+      <div class="compose-row">
+        <input type="text" id="postUrl" placeholder="...or paste a public post URL (optional)" />
+        <button class="btn btn-primary" id="draftBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          Draft email
+        </button>
+      </div>
+    </section>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab" data-filter="all" aria-selected="true">All</button>
+      <button class="tab" data-filter="drafted" aria-selected="false">Ready</button>
+      <button class="tab" data-filter="scheduled" aria-selected="false">Scheduled</button>
+      <button class="tab" data-filter="needs_info" aria-selected="false">Needs info</button>
+      <button class="tab" data-filter="apply_on_site" aria-selected="false">Apply on site</button>
+      <button class="tab" data-filter="sent" aria-selected="false">Sent</button>
+    </nav>
+
+    <div id="list"></div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="panel" id="panel" aria-hidden="true">
+    <div class="panel-head">
+      <h2>Your profile</h2>
+      <button class="icon-btn" id="panelClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="panel-body">
+      <div class="resume-box">
+        <div class="span">Resume (PDF)</div>
+        <input type="file" id="pf-resume" accept="application/pdf" />
+        <div class="hint" id="pf-resume-status" style="margin-top:8px;">Upload to auto-fill the fields below. It also becomes the file attached to every email.</div>
+      </div>
+      <div class="field"><span>Name</span><input type="text" id="pf-name" /></div>
+      <div class="field"><span>Phone</span><input type="text" id="pf-phone" /></div>
+      <div class="field"><span>Email (yours)</span><input type="text" id="pf-email" /></div>
+      <div class="field"><span>Experience</span><input type="text" id="pf-years" placeholder="e.g. ~2 years" /></div>
+      <div class="field"><span>Domains</span><input type="text" id="pf-domains" placeholder="e.g. edtech, fintech" /></div>
+      <div class="field"><span>Skills</span><textarea id="pf-skills" style="min-height:64px;" placeholder="comma-separated"></textarea></div>
+      <div class="field"><span>Titles held</span><input type="text" id="pf-titles" placeholder="comma-separated" /></div>
+      <div class="field"><span>Education</span><textarea id="pf-education" style="min-height:54px;"></textarea></div>
+      <div class="field"><span>Summary</span><textarea id="pf-summary" style="min-height:110px;"></textarea></div>
+      <button class="btn btn-primary" id="saveProfile" style="width:100%;justify-content:center;">Save changes</button>
+    </div>
+  </aside>
+
+  <div class="toasts" id="toasts"></div>
+
+<script>
+const STATUS = {
+  drafted:{pill:"Ready"}, scheduled:{pill:"Scheduled"}, needs_info:{pill:"Needs info"},
+  apply_on_site:{pill:"On site"}, sent:{pill:"Sent"}, skipped:{pill:"Skipped"},
+};
+let currentFilter = "all";
+
+function esc(s){return (s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function parseUTC(s){
+  if(!s) return null;
+  let t = String(s);
+  if(!/[zZ]$|[+\-]\d\d:?\d\d$/.test(t)) t = t.replace(/\.\d+$/, "") + "Z";
+  const d = new Date(t);
+  return isNaN(d.getTime()) ? null : d;
+}
+function fmtLocal(d){ return d ? d.toLocaleString(undefined,{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}) : "-"; }
+
+async function api(method, path, body){
+  const opt = {method, headers:{}};
+  if(body !== undefined){ opt.headers["Content-Type"]="application/json"; opt.body=JSON.stringify(body); }
+  const res = await fetch(path, opt);
+  let data = null;
+  try{ data = await res.json(); }catch(_){}
+  if(!res.ok){ const d = data && data.detail; throw new Error(typeof d==="string"?d:(d?JSON.stringify(d):"Error "+res.status)); }
+  return data;
+}
+function toast(msg, type){
+  const el = document.createElement("div");
+  el.className = "toast" + (type==="err"?" err":"");
+  el.textContent = msg;
+  document.getElementById("toasts").appendChild(el);
+  setTimeout(()=>el.remove(), 3600);
+}
+function val(id){ return document.getElementById(id).value; }
+function setv(id,v){ document.getElementById(id).value = v||""; }
+
+/* profile */
+const panel = document.getElementById("panel"), scrim = document.getElementById("scrim");
+function openPanel(){ panel.classList.add("open"); scrim.classList.add("open"); panel.setAttribute("aria-hidden","false"); }
+function closePanel(){ panel.classList.remove("open"); scrim.classList.remove("open"); panel.setAttribute("aria-hidden","true"); }
+document.getElementById("profileBtn").onclick = openPanel;
+document.getElementById("panelClose").onclick = closePanel;
+scrim.onclick = closePanel;
+
+function fillProfile(p){
+  setv("pf-name",p.name); setv("pf-phone",p.phone); setv("pf-email",p.email);
+  setv("pf-years",p.years); setv("pf-domains",p.domains); setv("pf-skills",p.skills);
+  setv("pf-titles",p.titles); setv("pf-education",p.education); setv("pf-summary",p.summary);
+  if(p.resume_filename){
+    document.getElementById("pf-resume-status").textContent = "Current file: " + p.resume_filename + ". Upload a new one to replace it.";
+  }
+}
+async function loadProfile(){
+  try{ fillProfile(await api("GET","/profile")); }catch(e){ toast(e.message,"err"); }
+}
+document.getElementById("saveProfile").onclick = async ()=>{
+  try{
+    await api("PUT","/profile",{name:val("pf-name"),phone:val("pf-phone"),email:val("pf-email"),
+      years:val("pf-years"),domains:val("pf-domains"),skills:val("pf-skills"),
+      titles:val("pf-titles"),education:val("pf-education"),summary:val("pf-summary")});
+    toast("Profile saved"); closePanel();
+  }catch(e){ toast(e.message,"err"); }
+};
+document.getElementById("pf-resume").onchange = async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const status = document.getElementById("pf-resume-status");
+  status.textContent = "Reading your resume...";
+  try{
+    const fd = new FormData(); fd.append("file", f);
+    const res = await fetch("/profile/resume", {method:"POST", body: fd});
+    if(!res.ok){ const d = await res.json().catch(()=>null); throw new Error(d&&d.detail?d.detail:"upload failed"); }
+    fillProfile(await res.json());
+    status.textContent = "Loaded from your resume - review the fields and Save.";
+    toast("Resume parsed");
+  }catch(err){ status.textContent = "Upload failed."; toast(err.message,"err"); }
+};
+
+/* compose */
+document.getElementById("draftBtn").onclick = async ()=>{
+  const text = val("postText").trim(), url = val("postUrl").trim();
+  if(!text && !url){ toast("Paste a post or a link first","err"); return; }
+  const btn = document.getElementById("draftBtn"); btn.disabled = true;
+  try{
+    const r = await api("POST","/applications/from-post", { text: text||null, url: url||null });
+    if(r && r.needs_paste){ toast("That link is gated - paste the post text instead","err"); }
+    else{ setv("postText",""); setv("postUrl",""); toast("Drafted"); await loadQueue(); }
+  }catch(e){ toast(e.message,"err"); }
+  btn.disabled = false;
+};
+
+/* queue */
+const list = document.getElementById("list");
+function fields(){ return `
+  <div class="field"><span>To</span><input type="text" data-f="recipient" /></div>
+  <div class="field"><span>Subject</span><input type="text" data-f="subject" /></div>
+  <div class="field"><span>Email</span><textarea class="body-area" data-f="body"></textarea></div>`; }
+function sendSvg(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>`; }
+function clockSvg(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`; }
+
+function ticketHTML(a){
+  const s = a.status;
+  const meta = `send to <b>${esc(a.recipient_email || "-")}</b>` +
+               (a.location ? ` &nbsp;&middot;&nbsp; ${esc(a.location)}` : "") +
+               (a.posted ? ` &nbsp;&middot;&nbsp; ${esc(a.posted)}` : "");
+  let middle = "";
+  if(s === "scheduled"){ middle += `<div class="sched-banner" data-when>Scheduled...</div>`; }
+  if(s === "drafted" || s === "needs_info" || s === "scheduled"){
+    middle += fields();
+    if(s === "needs_info" && (a.missing_info||[]).length){
+      middle += `<div class="ask"><h4>A couple of details would sharpen this</h4>
+        <p>Answer once - saved and reused on every future application.</p>
+        <div class="ask-grid">` +
+        a.missing_info.map(m=>`<div class="field"><span>${esc(m.label||m.key)}</span><input type="text" data-ask="${esc(m.key)}" /></div>`).join("") +
+        `</div><button class="btn btn-ghost" data-action="answer" data-id="${a.id}" style="margin-top:12px;">Save &amp; redraft</button></div>`;
+    }
+  } else if(s === "apply_on_site"){
+    const prepared = a.prepared_answers || [];
+    if(prepared.length){
+      middle = `<div class="qa">` + prepared.map(qa=>`
+        <div class="qa-item">
+          <div class="qa-q">${esc(qa.question)}</div>
+          <div class="qa-a"><textarea readonly>${esc(qa.answer)}</textarea><button class="btn-quiet" data-action="copyqa">Copy</button></div>
+        </div>`).join("") + `</div>`;
+    } else {
+      middle = `<p class="hint" style="margin-top:14px;">No email here - this one is a web form or apply link. Prepare your answers, then open it and paste them in.</p>`;
+    }
+  } else if(s === "sent"){
+    middle = `<div class="sent-note">subject: ${esc(a.subject || "-")}</div>`;
+  }
+
+  let actions = "";
+  if(s === "drafted" || s === "needs_info"){
+    actions = `<button class="btn btn-primary" data-action="send" data-id="${a.id}">${sendSvg()} Send</button>
+      <button class="btn btn-ghost" data-action="save" data-id="${a.id}">Save changes</button>
+      <span class="spacer"></span><button class="btn-quiet" data-action="skip" data-id="${a.id}">Skip</button>`;
+  } else if(s === "scheduled"){
+    actions = `<button class="btn btn-primary" data-action="send" data-id="${a.id}">${sendSvg()} Send now</button>
+      <button class="btn btn-ghost" data-action="save" data-id="${a.id}">Save changes</button>
+      <span class="spacer"></span><button class="btn-quiet" data-action="unschedule" data-id="${a.id}">Cancel schedule</button>`;
+  } else if(s === "apply_on_site"){
+    const prepared = a.prepared_answers || [];
+    const openUrl = a.prefill_url || a.source_url;
+    actions = (prepared.length ? `<button class="btn btn-ghost" data-action="prepare" data-id="${a.id}">Redo answers</button>`
+                               : `<button class="btn btn-primary" data-action="prepare" data-id="${a.id}">Prepare answers</button>`) +
+      (openUrl ? `<a class="btn btn-ghost" href="${esc(openUrl)}" target="_blank" rel="noopener">${a.prefill_url?"Open form (pre-filled)":"Open link"}</a>` : "") +
+      `<span class="spacer"></span><button class="btn-quiet" data-action="skip" data-id="${a.id}">Skip</button>`;
+  }
+
+  let schedRow = "";
+  if(s === "drafted" || s === "needs_info"){
+    schedRow = `<div class="t-actions sched-row">
+      <input type="datetime-local" data-f="when" />
+      <button class="btn btn-ghost" data-action="schedule" data-id="${a.id}">${clockSvg()} Schedule send</button>
+    </div>`;
+  }
+
+  return `<article class="ticket s-${s}" data-id="${a.id}">
+    <div class="t-head">
+      <div>
+        <div class="t-title">${esc(a.company || "Unknown")} <span class="role">&middot; ${esc(a.role || "role")}</span></div>
+        <div class="t-meta">${meta}</div>
+      </div>
+      <span class="pill p-${s}">${(STATUS[s]||{}).pill || s}</span>
+    </div>
+    ${middle}
+    ${actions ? `<div class="t-actions">${actions}</div>`:""}
+    ${schedRow}
+  </article>`;
+}
+
+function fillValues(apps){
+  const now = new Date(), pad = n => String(n).padStart(2,"0");
+  const localMin = now.getFullYear()+"-"+pad(now.getMonth()+1)+"-"+pad(now.getDate())+"T"+pad(now.getHours())+":"+pad(now.getMinutes());
+  apps.forEach(a=>{
+    const card = list.querySelector(`.ticket[data-id="${a.id}"]`);
+    if(!card) return;
+    const r = card.querySelector('[data-f="recipient"]'); if(r) r.value = a.recipient_email||"";
+    const sub = card.querySelector('[data-f="subject"]'); if(sub) sub.value = a.subject||"";
+    const bod = card.querySelector('[data-f="body"]'); if(bod) bod.value = a.body||"";
+    const when = card.querySelector('[data-f="when"]'); if(when) when.min = localMin;
+    const banner = card.querySelector("[data-when]");
+    if(banner) banner.innerHTML = "Sends <b>" + esc(fmtLocal(parseUTC(a.scheduled_for))) + "</b>";
+  });
+}
+
+async function loadQueue(){
+  try{
+    const apps = await api("GET","/applications");
+    const visible = apps.filter(a => currentFilter==="all" ? a.status!=="skipped" : a.status===currentFilter);
+    const live = apps.filter(a => a.status==="drafted" || a.status==="needs_info").length;
+    document.getElementById("count").textContent = live ? `${live} ready` : "";
+    if(!visible.length){
+      list.innerHTML = `<div class="empty">
+        <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+        <h3>Nothing here yet</h3><p>Paste a hiring post above to draft your first email.</p></div>`;
+      return;
+    }
+    list.innerHTML = visible.map(ticketHTML).join("");
+    fillValues(visible);
+  }catch(e){
+    list.innerHTML = `<div class="empty"><h3>Can't reach the server</h3><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+list.addEventListener("click", async (e)=>{
+  const btn = e.target.closest("[data-action]");
+  if(!btn) return;
+  const id = btn.dataset.id, action = btn.dataset.action, card = btn.closest(".ticket");
+  const reads = () => ({
+    recipient_email: card.querySelector('[data-f="recipient"]').value,
+    subject: card.querySelector('[data-f="subject"]').value,
+    body: card.querySelector('[data-f="body"]').value,
+  });
+  try{
+    if(action === "send"){
+      const v = reads();
+      if(!v.recipient_email.trim()){ toast("Add a recipient email first","err"); return; }
+      if(!confirm("Send this email to " + v.recipient_email.trim() + " ?")) return;
+      btn.disabled = true;
+      await api("PATCH","/applications/"+id, v);
+      await api("POST","/applications/"+id+"/send");
+      toast("Sent"); await loadQueue();
+    } else if(action === "save"){
+      await api("PATCH","/applications/"+id, reads()); toast("Changes saved");
+    } else if(action === "skip"){
+      await api("POST","/applications/"+id+"/skip"); toast("Skipped"); await loadQueue();
+    } else if(action === "answer"){
+      const answers = {};
+      card.querySelectorAll("[data-ask]").forEach(inp=>{ if(inp.value.trim()) answers[inp.dataset.ask]=inp.value.trim(); });
+      if(!Object.keys(answers).length){ toast("Fill at least one detail","err"); return; }
+      btn.disabled = true;
+      await api("POST","/applications/"+id+"/answers",{answers}); toast("Saved - redrafting"); await loadQueue();
+    } else if(action === "schedule"){
+      const v = reads();
+      if(!v.recipient_email.trim()){ toast("Add a recipient email first","err"); return; }
+      const whenVal = card.querySelector('[data-f="when"]').value;
+      if(!whenVal){ toast("Pick a date and time first","err"); return; }
+      btn.disabled = true;
+      await api("PATCH","/applications/"+id, v);
+      await api("POST","/applications/"+id+"/schedule",{ scheduled_for: new Date(whenVal).toISOString() });
+      toast("Scheduled"); await loadQueue();
+    } else if(action === "unschedule"){
+      await api("POST","/applications/"+id+"/unschedule"); toast("Schedule canceled - back to drafts"); await loadQueue();
+    } else if(action === "prepare"){
+      btn.disabled = true; btn.textContent = "Preparing...";
+      await api("POST","/applications/"+id+"/prepare"); toast("Answers ready"); await loadQueue();
+    } else if(action === "copyqa"){
+      const ta = btn.closest(".qa-a").querySelector("textarea");
+      try{ await navigator.clipboard.writeText(ta.value); toast("Copied"); }catch(_){}
+    }
+  }catch(err){ toast(err.message,"err"); btn.disabled = false; }
+});
+
+document.getElementById("tabs").addEventListener("click",(e)=>{
+  const t = e.target.closest(".tab"); if(!t) return;
+  document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected","false"));
+  t.setAttribute("aria-selected","true"); currentFilter = t.dataset.filter; loadQueue();
+});
+document.getElementById("alertsBtn").onclick = async ()=>{
+  const btn = document.getElementById("alertsBtn"); btn.disabled = true;
+  try{
+    const r = await api("POST","/ingest/alerts");
+    toast(`Read ${r.emails_read} alert${r.emails_read===1?"":"s"} - ${r.new_applications} new`);
+    await loadQueue();
+  }catch(e){ toast(e.message,"err"); }
+  btn.disabled = false;
+};
+
+setInterval(loadQueue, 30000);
+loadProfile();
+loadQueue();
+</script>
+</body>
+</html>
