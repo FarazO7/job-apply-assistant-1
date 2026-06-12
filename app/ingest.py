@@ -6,8 +6,29 @@ from .config import csv, settings
 from .db import applications, profiles
 from .fetcher import best_effort_fetch
 from .models import DEFAULT_PROFILE, dedupe_key, now
+from urllib.parse import urlsplit, urlunsplit
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _norm_url(url):
+    """Strip tracking query params so the same job collapses to one dedupe key."""
+    if not url:
+        return ""
+    try:
+        p = urlsplit(url)
+        return urlunsplit((p.scheme.lower(), p.netloc.lower(), p.path.rstrip("/"), "", "")).lower()
+    except Exception:
+        return url.split("?")[0].rstrip("/").lower()
+
+
+def _join(items):
+    return ", ".join([x.strip() for x in (items or []) if x and x.strip()])
+
+
+def subject_for(role):
+    r = (role or "this role").strip() or "this role"
+    return f"Application for {r} | Immediate Joiner"
 
 
 def get_profile():
@@ -53,18 +74,20 @@ def ingest_post(text=None, url=None):
         return {"error": "empty post"}
     profile = get_profile()
     data = llm.parse_and_write_post(text, profile, profile.get("answers", {}))
-    recipient = data.get("recipient_email", "")
+    to = _join(data.get("recipient_emails", []))
+    cc = _join(data.get("cc_emails", []))
+    bcc = _join(data.get("bcc_emails", []))
     missing = data.get("missing_info", []) or []
     company = data.get("company", "")
     role = data.get("chosen_role", "")
     doc = {
         "source": source,
-        "dedupe_key": dedupe_key(company, role, recipient),
+        "dedupe_key": dedupe_key(company, role, _norm_url(url) or to),
         "company": company, "role": role,
         "all_roles": data.get("roles", []), "other_roles": data.get("other_roles", []),
-        "recipient_email": recipient,
-        "subject": data.get("subject", ""), "body": data.get("body", ""),
-        "missing_info": missing, "status": _status_for(recipient, missing),
+        "recipient_email": to, "cc_emails": cc, "bcc_emails": bcc,
+        "subject": subject_for(role) if to else "", "body": data.get("body", ""),
+        "missing_info": missing, "status": _status_for(to, missing),
         "source_url": url or "", "raw_text": text[:5000],
         "prepared_answers": [], "prefill_url": "",
         "sent_at": None,
@@ -88,21 +111,22 @@ def ingest_alerts():
             recipient = listing.get("recipient_email", "")
             company = listing.get("company", "")
             role = listing.get("title", "")
-            subject, body, missing = "", "", []
+            body, missing = "", []
             if recipient:
                 try:
                     drafted = llm.write_email_for_listing(listing, profile, answers)
-                    subject = drafted.get("subject", "")
                     body = drafted.get("body", "")
                     missing = drafted.get("missing_info", []) or []
                 except Exception:
                     pass
             doc = {
                 "source": "alert",
-                "dedupe_key": dedupe_key(company, role, listing.get("url", "")),
+                "dedupe_key": dedupe_key(company, role, _norm_url(listing.get("url", ""))),
                 "company": company, "role": role, "all_roles": [], "other_roles": [],
-                "recipient_email": recipient, "location": listing.get("location", ""),
-                "posted": listing.get("posted", ""), "subject": subject, "body": body,
+                "recipient_email": recipient, "cc_emails": "", "bcc_emails": "",
+                "location": listing.get("location", ""),
+                "posted": listing.get("posted", ""),
+                "subject": subject_for(role) if recipient else "", "body": body,
                 "missing_info": missing, "status": _status_for(recipient, missing),
                 "source_url": listing.get("url", ""), "raw_text": "",
                 "prepared_answers": [], "prefill_url": "",
@@ -120,20 +144,27 @@ def regenerate(app_doc):
     answers = profile.get("answers", {})
     if app_doc.get("raw_text"):
         data = llm.parse_and_write_post(app_doc["raw_text"], profile, answers)
-        recipient = data.get("recipient_email", "") or app_doc.get("recipient_email", "")
-        subject, body = data.get("subject", ""), data.get("body", "")
+        recipient = _join(data.get("recipient_emails", [])) or app_doc.get("recipient_email", "")
+        body = data.get("body", "")
         missing = data.get("missing_info", []) or []
+        role = data.get("chosen_role", "") or app_doc.get("role", "")
+        cc = _join(data.get("cc_emails", [])) or app_doc.get("cc_emails", "")
+        bcc = _join(data.get("bcc_emails", [])) or app_doc.get("bcc_emails", "")
     else:
         listing = {"title": app_doc.get("role", ""), "company": app_doc.get("company", ""),
                    "location": app_doc.get("location", ""), "url": app_doc.get("source_url", ""),
                    "recipient_email": app_doc.get("recipient_email", "")}
         drafted = llm.write_email_for_listing(listing, profile, answers)
         recipient = app_doc.get("recipient_email", "")
-        subject, body = drafted.get("subject", ""), drafted.get("body", "")
+        body = drafted.get("body", "")
         missing = drafted.get("missing_info", []) or []
+        role = app_doc.get("role", "")
+        cc = app_doc.get("cc_emails", "")
+        bcc = app_doc.get("bcc_emails", "")
     applications.update_one({"_id": app_doc["_id"]}, {"$set": {
-        "subject": subject, "body": body, "missing_info": missing,
-        "recipient_email": recipient, "status": _status_for(recipient, missing), "updated_at": now()}})
+        "subject": subject_for(role) if recipient else "", "body": body, "missing_info": missing,
+        "recipient_email": recipient, "cc_emails": cc, "bcc_emails": bcc,
+        "status": _status_for(recipient, missing), "updated_at": now()}})
     return applications.find_one({"_id": app_doc["_id"]})
 
 

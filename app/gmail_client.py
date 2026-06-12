@@ -81,12 +81,17 @@ def read_alert_emails(senders: list[str], limit: int = 50) -> list[dict]:
     return out
 
 
-def send_email(to: str, subject: str, body: str, resume_path: str = "", from_addr: str = "") -> None:
-    """Send a plain-text email with the resume attached, from the configured Gmail."""
+def send_email(to: str, subject: str, body: str, resume_path: str = "", cc: str = "", bcc: str = "", from_addr: str = "") -> None:
+    """Send a plain-text email with the resume attached, from the configured Gmail.
+    `to`, `cc` and `bcc` may each hold several comma-separated addresses."""
     sender = from_addr or settings.gmail_address
     msg = EmailMessage()
     msg["From"] = sender
     msg["To"] = to
+    if cc:
+        msg["Cc"] = cc
+    if bcc:
+        msg["Bcc"] = bcc
     msg["Subject"] = subject
     msg.set_content(body)
 

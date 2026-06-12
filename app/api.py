@@ -57,6 +57,7 @@ class ProfileIn(BaseModel):
     skills: Optional[str] = None
     titles: Optional[str] = None
     education: Optional[str] = None
+    background: Optional[str] = None
 
 
 class AnswersIn(BaseModel):
@@ -65,6 +66,8 @@ class AnswersIn(BaseModel):
 
 class EmailEdit(BaseModel):
     recipient_email: Optional[str] = None
+    cc_emails: Optional[str] = None
+    bcc_emails: Optional[str] = None
     subject: Optional[str] = None
     body: Optional[str] = None
 
@@ -144,6 +147,8 @@ def send_application(app_id: str):
         subject=doc["subject"],
         body=doc["body"],
         resume_path=ingest.effective_resume_path(),
+        cc=doc.get("cc_emails", ""),
+        bcc=doc.get("bcc_emails", ""),
     )
     applications.update_one(
         {"_id": doc["_id"]},
@@ -158,6 +163,14 @@ def skip_application(app_id: str):
         {"_id": _oid(app_id)}, {"$set": {"status": "skipped", "updated_at": now()}}
     )
     return {"ok": True}
+
+
+@app.post("/applications/{app_id}/applied")
+def mark_applied(app_id: str):
+    applications.update_one(
+        {"_id": _oid(app_id)}, {"$set": {"status": "applied", "updated_at": now()}}
+    )
+    return serialize(applications.find_one({"_id": _oid(app_id)}))
 
 
 # ---- profile ----
@@ -202,6 +215,8 @@ def _send_doc(doc):
         subject=doc.get("subject", ""),
         body=doc.get("body", ""),
         resume_path=ingest.effective_resume_path(),
+        cc=doc.get("cc_emails", ""),
+        bcc=doc.get("bcc_emails", ""),
     )
     applications.update_one(
         {"_id": doc["_id"]},

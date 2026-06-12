@@ -75,13 +75,16 @@ def parse_and_write_post(text, profile, answers):
         + _profile_block(profile, answers)
         + "\n\nHIRING POST:\n###\n" + text + "\n###\n\n"
         "Do all of this:\n"
-        "1. Extract the recipient email address candidates should send applications to. If none, use \"\".\n"
+        "1. Extract EVERY email address the post says to send the application to, as a list in "
+        "recipient_emails. If the post explicitly says to CC an address, put it in cc_emails; if it says "
+        "to BCC an address, put it in bcc_emails. Use empty lists when there are none.\n"
         "2. Extract company name and every role listed with its experience range.\n"
         "3. Choose the single role that best fits the candidate; put it in chosen_role, the rest in other_roles.\n"
         "4. " + _EMAIL_RULES + "\n\n"
         "Return ONLY JSON, no markdown:\n"
-        '{"recipient_email":"","company":"","roles":[{"title":"","experience":""}],'
-        '"chosen_role":"","other_roles":[],"subject":"","body":"","missing_info":[{"key":"","label":""}]}'
+        '{"recipient_emails":[],"cc_emails":[],"bcc_emails":[],"company":"",'
+        '"roles":[{"title":"","experience":""}],"chosen_role":"","other_roles":[],'
+        '"subject":"","body":"","missing_info":[{"key":"","label":""}]}'
     )
     return _parse_json(_ask(prompt))
 

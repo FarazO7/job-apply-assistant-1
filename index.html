@@ -9,64 +9,93 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --bg:#F6F6F4; --surface:#FFFFFF; --ink:#1A1A1E; --muted:#6B6B73; --line:#E6E5E1;
+    --ink:#1A1A1E; --muted:#5B5B66; --line:rgba(120,120,150,0.18);
     --accent:#2B4FE0;
-    --ok:#0E9F6E; --ok-bg:#ECFDF3;
-    --warn:#B45309; --warn-bg:#FFFBEB;
-    --site:#0B69A3; --site-bg:#EFF6FF;
-    --sched:#5B45E0; --sched-bg:#EEF0FF;
-    --done:#71717A; --done-bg:#F3F3F2;
-    --radius:14px;
-    --shadow:0 1px 2px rgba(26,26,30,.05), 0 6px 22px rgba(26,26,30,.05);
+    --ok:#0B8A5E; --ok-bg:rgba(16,159,110,0.14);
+    --warn:#9A6300; --warn-bg:rgba(180,120,20,0.16);
+    --site:#0B69A3; --site-bg:rgba(11,105,163,0.14);
+    --sched:#5B45E0; --sched-bg:rgba(91,69,224,0.15);
+    --done:#5B5B66; --done-bg:rgba(120,120,150,0.16);
+    --glass-card:rgba(255,255,255,0.60);
+    --glass-chrome:rgba(255,255,255,0.52);
+    --glass-panel:rgba(255,255,255,0.74);
+    --glass-blur:blur(14px) saturate(135%);
+    --glass-border:rgba(255,255,255,0.65);
+    --glass-shadow:0 10px 34px rgba(31,40,80,0.13);
+    --radius:16px;
     --t:180ms cubic-bezier(.2,.7,.3,1);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;}
-  body{background:var(--bg); color:var(--ink); font-family:"Inter",system-ui,sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;}
+  body{
+    color:var(--ink); font-family:"Inter",system-ui,sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    background:
+      radial-gradient(58vw 58vw at 8% -12%, rgba(95,130,255,0.36), transparent 60%),
+      radial-gradient(52vw 52vw at 106% 0%, rgba(60,210,196,0.30), transparent 56%),
+      radial-gradient(66vw 66vw at 88% 114%, rgba(140,118,250,0.30), transparent 60%),
+      linear-gradient(165deg, #e8eefb 0%, #e6edf7 45%, #e7f4f0 100%);
+    background-attachment:fixed;
+  }
+  .glass{ background:var(--glass-card); -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+          border:1px solid var(--glass-border); box-shadow:var(--glass-shadow); }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+    .topbar,.compose,.ticket,.panel,.empty{ background:rgba(255,255,255,0.93) !important; }
+  }
   .wrap{max-width:920px; margin:0 auto; padding:0 24px 96px;}
 
-  .topbar{display:flex; align-items:center; justify-content:space-between; padding:22px 0 20px; border-bottom:1px solid var(--line); margin-bottom:28px; position:sticky; top:0; background:var(--bg); z-index:20;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:18px 20px; margin:14px 0 26px;
+    border-radius:14px; position:sticky; top:14px; z-index:20;
+    background:var(--glass-chrome); -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+    border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);}
   .brand{display:flex; align-items:baseline; gap:10px;}
   .brand h1{font-family:"Space Grotesk",sans-serif; font-weight:700; font-size:20px; letter-spacing:-.01em; margin:0;}
-  .brand .dot{width:8px; height:8px; border-radius:50%; background:var(--accent); transform:translateY(-2px);}
+  .brand .dot{width:8px; height:8px; border-radius:50%; background:var(--accent); transform:translateY(-2px); box-shadow:0 0 10px rgba(43,79,224,.6);}
   .brand small{font-family:"IBM Plex Mono",monospace; color:var(--muted); font-size:12px;}
   .bar-actions{display:flex; gap:8px;}
 
   button{font-family:inherit; cursor:pointer; border:none; transition:background var(--t), border-color var(--t), opacity var(--t), transform var(--t);}
   button:active{transform:translateY(1px);}
-  .btn{display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 14px; border-radius:10px; font-size:14px; font-weight:500;}
+  .btn{display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 14px; border-radius:11px; font-size:14px; font-weight:500;}
   a.btn{text-decoration:none;}
   .btn svg{width:16px; height:16px;}
   .btn-primary{background:var(--ink); color:#fff;}
   .btn-primary:hover{background:#34343b;}
-  .btn-ghost{background:transparent; color:var(--ink); border:1px solid var(--line);}
-  .btn-ghost:hover{background:#efeeec;}
+  .btn-ghost{background:rgba(255,255,255,0.5); color:var(--ink); border:1px solid var(--glass-border);}
+  .btn-ghost:hover{background:rgba(255,255,255,0.75);}
   .btn-quiet{background:transparent; color:var(--muted); height:34px; padding:0 10px; border-radius:8px; font-size:13px;}
-  .btn-quiet:hover{background:#efeeec; color:var(--ink);}
+  .btn-quiet:hover{background:rgba(255,255,255,0.55); color:var(--ink);}
   .btn:disabled{opacity:.45; cursor:not-allowed;}
   :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px;}
 
-  .compose{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;}
+  .compose{border-radius:var(--radius); padding:18px;
+    background:var(--glass-card); -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+    border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);}
   .compose label{font-size:12px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
-  textarea, input[type=text], input[type=datetime-local]{width:100%; font-family:inherit; font-size:14px; color:var(--ink); background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 12px; transition:border-color var(--t), box-shadow var(--t); resize:vertical;}
-  textarea:focus, input[type=text]:focus, input[type=datetime-local]:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(43,79,224,.12);}
+  textarea, input[type=text], input[type=datetime-local]{width:100%; font-family:inherit; font-size:14px; color:var(--ink);
+    background:rgba(255,255,255,0.86); border:1px solid var(--glass-border); border-radius:10px; padding:10px 12px;
+    transition:border-color var(--t), box-shadow var(--t); resize:vertical;}
+  textarea:focus, input[type=text]:focus, input[type=datetime-local]:focus{outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(43,79,224,.14);}
   .compose textarea{margin-top:6px; min-height:104px;}
   .compose-row{display:flex; gap:10px; align-items:center; margin-top:12px;}
   .compose-row input{flex:1;}
   .hint{font-size:12.5px; color:var(--muted);}
 
   .tabs{display:flex; gap:4px; margin:30px 0 16px; flex-wrap:wrap;}
-  .tab{background:transparent; color:var(--muted); height:34px; padding:0 13px; border-radius:999px; font-size:13.5px; font-weight:500; border:1px solid transparent;}
-  .tab:hover{background:#efeeec; color:var(--ink);}
+  .tab{background:rgba(255,255,255,0.4); color:var(--muted); height:34px; padding:0 13px; border-radius:999px; font-size:13.5px; font-weight:500; border:1px solid transparent;}
+  .tab:hover{background:rgba(255,255,255,0.7); color:var(--ink);}
   .tab[aria-selected=true]{background:var(--ink); color:#fff;}
 
-  .ticket{position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px 18px 16px 22px; margin-bottom:14px; overflow:hidden;}
+  .ticket{position:relative; border-radius:var(--radius); padding:18px 18px 16px 22px; margin-bottom:14px; overflow:hidden;
+    background:var(--glass-card); -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+    border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);}
   .ticket::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--done);}
   .ticket.s-drafted::before{background:var(--ok);}
   .ticket.s-needs_info::before{background:var(--warn);}
   .ticket.s-scheduled::before{background:var(--sched);}
   .ticket.s-apply_on_site::before{background:var(--site);}
   .ticket.s-sent::before{background:var(--done);}
+  .ticket.s-applied::before{background:var(--ok);}
   .t-head{display:flex; justify-content:space-between; align-items:flex-start; gap:14px;}
   .t-title{font-family:"Space Grotesk",sans-serif; font-weight:500; font-size:17px; letter-spacing:-.01em;}
   .t-title .role{color:var(--muted); font-weight:500;}
@@ -78,6 +107,7 @@
   .p-scheduled{background:var(--sched-bg); color:var(--sched);}
   .p-apply_on_site{background:var(--site-bg); color:var(--site);}
   .p-sent{background:var(--done-bg); color:var(--done);}
+  .p-applied{background:var(--ok-bg); color:var(--ok);}
 
   .field{margin-top:14px;}
   .field span{font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:5px;}
@@ -91,11 +121,11 @@
   .qa-q{font-size:13px; font-weight:600; color:var(--ink); margin-bottom:5px;}
   .qa-a{position:relative;}
   .qa-a textarea{width:100%; min-height:62px; font-size:13.5px;}
-  .qa-a .btn-quiet{position:absolute; top:6px; right:6px; background:#fff;}
+  .qa-a .btn-quiet{position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.8);}
 
-  .ask{background:var(--warn-bg); border:1px solid #FCE8C3; border-radius:12px; padding:13px 14px; margin-top:14px;}
-  .ask h4{margin:0 0 2px; font-size:13px; color:#92400E;}
-  .ask p{margin:0 0 10px; font-size:12px; color:#a16207;}
+  .ask{background:var(--warn-bg); border:1px solid rgba(180,120,20,0.25); border-radius:12px; padding:13px 14px; margin-top:14px;}
+  .ask h4{margin:0 0 2px; font-size:13px; color:#7c4d00;}
+  .ask p{margin:0 0 10px; font-size:12px; color:#8a5800;}
   .ask-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   .ask-grid .field{margin-top:0;}
 
@@ -107,29 +137,34 @@
   .link:hover{text-decoration:underline;}
   .sent-note{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted); margin-top:10px;}
 
-  .empty{text-align:center; padding:64px 20px; color:var(--muted);}
-  .empty .mark{width:40px; height:40px; margin:0 auto 14px; color:var(--line);}
+  .empty{text-align:center; padding:56px 20px; color:var(--muted); border-radius:var(--radius);
+    background:var(--glass-card); -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+    border:1px solid var(--glass-border); box-shadow:var(--glass-shadow);}
+  .empty .mark{width:40px; height:40px; margin:0 auto 14px; color:rgba(90,90,110,.4);}
   .empty h3{font-family:"Space Grotesk",sans-serif; color:var(--ink); font-weight:500; margin:0 0 6px; font-size:18px;}
 
-  .scrim{position:fixed; inset:0; background:rgba(26,26,30,.35); opacity:0; pointer-events:none; transition:opacity var(--t); z-index:40;}
+  .scrim{position:fixed; inset:0; background:rgba(26,26,40,.4); opacity:0; pointer-events:none; transition:opacity var(--t); z-index:40;}
   .scrim.open{opacity:1; pointer-events:auto;}
-  .panel{position:fixed; top:0; right:0; bottom:0; width:min(460px,92vw); background:var(--surface); box-shadow:-12px 0 40px rgba(26,26,30,.16); transform:translateX(100%); transition:transform var(--t); z-index:41; display:flex; flex-direction:column;}
+  .panel{position:fixed; top:0; right:0; bottom:0; width:min(460px,92vw); z-index:41; display:flex; flex-direction:column;
+    background:var(--glass-panel); -webkit-backdrop-filter:blur(20px) saturate(140%); backdrop-filter:blur(20px) saturate(140%);
+    border-left:1px solid var(--glass-border); box-shadow:-12px 0 40px rgba(26,26,40,.22);
+    transform:translateX(100%); transition:transform var(--t);}
   .panel.open{transform:translateX(0);}
   .panel-head{display:flex; justify-content:space-between; align-items:center; padding:20px 22px; border-bottom:1px solid var(--line);}
   .panel-head h2{font-family:"Space Grotesk",sans-serif; font-size:18px; margin:0; font-weight:500;}
   .panel-body{padding:20px 22px; overflow-y:auto; flex:1;}
   .panel-body .field{margin-top:0; margin-bottom:14px;}
-  .resume-box{border:1px dashed var(--line); border-radius:12px; padding:14px; margin-bottom:18px; background:#fbfbfa;}
+  .resume-box{border:1px dashed var(--glass-border); border-radius:12px; padding:14px; margin-bottom:18px; background:rgba(255,255,255,0.4);}
   .resume-box .span{font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
   input[type=file]{font-size:13px; margin-top:8px; width:100%;}
-  input[type=file]::file-selector-button{font-family:inherit; font-size:13px; margin-right:10px; padding:7px 12px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer;}
+  input[type=file]::file-selector-button{font-family:inherit; font-size:13px; margin-right:10px; padding:7px 12px; border-radius:8px; border:1px solid var(--glass-border); background:rgba(255,255,255,0.7); cursor:pointer;}
   .icon-btn{background:transparent; width:34px; height:34px; border-radius:8px; display:grid; place-items:center; color:var(--muted);}
-  .icon-btn:hover{background:#efeeec; color:var(--ink);}
+  .icon-btn:hover{background:rgba(255,255,255,0.6); color:var(--ink);}
   .icon-btn svg{width:18px; height:18px;}
 
   .toasts{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); display:flex; flex-direction:column; gap:8px; z-index:60;}
-  .toast{background:var(--ink); color:#fff; padding:11px 16px; border-radius:10px; font-size:13.5px; box-shadow:var(--shadow); animation:rise var(--t) ease;}
-  .toast.err{background:#9F1239;}
+  .toast{background:rgba(26,26,30,0.9); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); color:#fff; padding:11px 16px; border-radius:10px; font-size:13.5px; box-shadow:var(--glass-shadow); animation:rise var(--t) ease;}
+  .toast.err{background:rgba(159,18,57,0.92);}
   @keyframes rise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
 
   @media (max-width:560px){.wrap{padding:0 16px 80px;} .ask-grid{grid-template-columns:1fr;} .t-head{flex-direction:column;}}
@@ -175,6 +210,7 @@
       <button class="tab" data-filter="needs_info" aria-selected="false">Needs info</button>
       <button class="tab" data-filter="apply_on_site" aria-selected="false">Apply on site</button>
       <button class="tab" data-filter="sent" aria-selected="false">Sent</button>
+      <button class="tab" data-filter="applied" aria-selected="false">Applied</button>
     </nav>
 
     <div id="list"></div>
@@ -202,7 +238,8 @@
       <div class="field"><span>Skills</span><textarea id="pf-skills" style="min-height:64px;" placeholder="comma-separated"></textarea></div>
       <div class="field"><span>Titles held</span><input type="text" id="pf-titles" placeholder="comma-separated" /></div>
       <div class="field"><span>Education</span><textarea id="pf-education" style="min-height:54px;"></textarea></div>
-      <div class="field"><span>Summary</span><textarea id="pf-summary" style="min-height:110px;"></textarea></div>
+      <div class="field"><span>Summary</span><textarea id="pf-summary" style="min-height:96px;"></textarea></div>
+      <div class="field"><span>Background / key wins</span><textarea id="pf-background" style="min-height:180px;" placeholder="Your projects, metrics, and how you frame them. The writer pulls the relevant point for each post."></textarea></div>
       <button class="btn btn-primary" id="saveProfile" style="width:100%;justify-content:center;">Save changes</button>
     </div>
   </aside>
@@ -212,9 +249,22 @@
 <script>
 const STATUS = {
   drafted:{pill:"Ready"}, scheduled:{pill:"Scheduled"}, needs_info:{pill:"Needs info"},
-  apply_on_site:{pill:"On site"}, sent:{pill:"Sent"}, skipped:{pill:"Skipped"},
+  apply_on_site:{pill:"On site"}, sent:{pill:"Sent"}, applied:{pill:"Applied"}, skipped:{pill:"Skipped"},
 };
 let currentFilter = "all";
+
+const SUGGESTED_BACKGROUND = `Associate Product Manager at Newton School (edtech), ~2 years in product. Electronics engineering degree plus an MBA in marketing and operations. AI-native PM; uses ChatGPT, Claude, Cursor and Lovable for PRDs, prototyping and workflow automation.
+
+Key wins:
+- Referral module that lifted conversion ~32% with direct revenue impact.
+- Referral incentive A/B test (cash vs prep material vs both); the combined offer raised signups ~15% while staying within target CAC.
+- AI proctoring (screenshots every 10s, flags multiple faces or phones with human review) cut manual effort ~70% and scaled without memory overload.
+- Razorpay Route API to split one student payment across two accounts (Newton plus a partner), with webhooks for success/failure and payment-ID mapping for auto-reconciliation; cut manual reconciliation ~99% and removed refund delays. Handled partial-payment and network-failure edge cases via webhooks.
+- CleverTap re-engagement (event-triggered WhatsApp, email, SMS) re-engaged dormant users for +12% signups and ~5% referral-driven revenue that quarter.
+- "Invite Your Juniors" funnel; fixed a copy-stage drop-off with a shimmer and a decluttered UI for +18% copy clicks and +10% conversions, tracked in Mixpanel.
+- Pivoted milestone rewards from gadgets to a ChatGPT Plus voucher from user feedback; +20% referrals from power users.
+- RICE-prioritized a self-serve interview reschedule button: +8% interview completion, +2% admissions.
+- Proposed a waitlist instead of a CRM for refund-driven seat loss; cut turnaround ~90% and kept zero vacant seats.`;
 
 function esc(s){return (s||"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function parseUTC(s){
@@ -257,6 +307,12 @@ function fillProfile(p){
   setv("pf-name",p.name); setv("pf-phone",p.phone); setv("pf-email",p.email);
   setv("pf-years",p.years); setv("pf-domains",p.domains); setv("pf-skills",p.skills);
   setv("pf-titles",p.titles); setv("pf-education",p.education); setv("pf-summary",p.summary);
+  if(p.background && p.background.trim()){
+    setv("pf-background", p.background);
+  } else {
+    setv("pf-background", SUGGESTED_BACKGROUND);
+    document.getElementById("pf-resume-status");
+  }
   if(p.resume_filename){
     document.getElementById("pf-resume-status").textContent = "Current file: " + p.resume_filename + ". Upload a new one to replace it.";
   }
@@ -268,7 +324,8 @@ document.getElementById("saveProfile").onclick = async ()=>{
   try{
     await api("PUT","/profile",{name:val("pf-name"),phone:val("pf-phone"),email:val("pf-email"),
       years:val("pf-years"),domains:val("pf-domains"),skills:val("pf-skills"),
-      titles:val("pf-titles"),education:val("pf-education"),summary:val("pf-summary")});
+      titles:val("pf-titles"),education:val("pf-education"),summary:val("pf-summary"),
+      background:val("pf-background")});
     toast("Profile saved"); closePanel();
   }catch(e){ toast(e.message,"err"); }
 };
@@ -302,7 +359,9 @@ document.getElementById("draftBtn").onclick = async ()=>{
 /* queue */
 const list = document.getElementById("list");
 function fields(){ return `
-  <div class="field"><span>To</span><input type="text" data-f="recipient" /></div>
+  <div class="field"><span>To (comma-separated for multiple)</span><input type="text" data-f="recipient" /></div>
+  <div class="field"><span>Cc</span><input type="text" data-f="cc" placeholder="optional" /></div>
+  <div class="field"><span>Bcc</span><input type="text" data-f="bcc" placeholder="optional" /></div>
   <div class="field"><span>Subject</span><input type="text" data-f="subject" /></div>
   <div class="field"><span>Email</span><textarea class="body-area" data-f="body"></textarea></div>`; }
 function sendSvg(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>`; }
@@ -335,7 +394,7 @@ function ticketHTML(a){
     } else {
       middle = `<p class="hint" style="margin-top:14px;">No email here - this one is a web form or apply link. Prepare your answers, then open it and paste them in.</p>`;
     }
-  } else if(s === "sent"){
+  } else if(s === "sent" || s === "applied"){
     middle = `<div class="sent-note">subject: ${esc(a.subject || "-")}</div>`;
   }
 
@@ -343,18 +402,24 @@ function ticketHTML(a){
   if(s === "drafted" || s === "needs_info"){
     actions = `<button class="btn btn-primary" data-action="send" data-id="${a.id}">${sendSvg()} Send</button>
       <button class="btn btn-ghost" data-action="save" data-id="${a.id}">Save changes</button>
-      <span class="spacer"></span><button class="btn-quiet" data-action="skip" data-id="${a.id}">Skip</button>`;
+      <span class="spacer"></span>
+      <button class="btn-quiet" data-action="applied" data-id="${a.id}">Mark applied</button>
+      <button class="btn-quiet" data-action="skip" data-id="${a.id}">Skip</button>`;
   } else if(s === "scheduled"){
     actions = `<button class="btn btn-primary" data-action="send" data-id="${a.id}">${sendSvg()} Send now</button>
       <button class="btn btn-ghost" data-action="save" data-id="${a.id}">Save changes</button>
-      <span class="spacer"></span><button class="btn-quiet" data-action="unschedule" data-id="${a.id}">Cancel schedule</button>`;
+      <span class="spacer"></span>
+      <button class="btn-quiet" data-action="applied" data-id="${a.id}">Mark applied</button>
+      <button class="btn-quiet" data-action="unschedule" data-id="${a.id}">Cancel schedule</button>`;
   } else if(s === "apply_on_site"){
     const prepared = a.prepared_answers || [];
     const openUrl = a.prefill_url || a.source_url;
     actions = (prepared.length ? `<button class="btn btn-ghost" data-action="prepare" data-id="${a.id}">Redo answers</button>`
                                : `<button class="btn btn-primary" data-action="prepare" data-id="${a.id}">Prepare answers</button>`) +
       (openUrl ? `<a class="btn btn-ghost" href="${esc(openUrl)}" target="_blank" rel="noopener">${a.prefill_url?"Open form (pre-filled)":"Open link"}</a>` : "") +
-      `<span class="spacer"></span><button class="btn-quiet" data-action="skip" data-id="${a.id}">Skip</button>`;
+      `<span class="spacer"></span>
+       <button class="btn-quiet" data-action="applied" data-id="${a.id}">Mark applied</button>
+       <button class="btn-quiet" data-action="skip" data-id="${a.id}">Skip</button>`;
   }
 
   let schedRow = "";
@@ -386,6 +451,8 @@ function fillValues(apps){
     const card = list.querySelector(`.ticket[data-id="${a.id}"]`);
     if(!card) return;
     const r = card.querySelector('[data-f="recipient"]'); if(r) r.value = a.recipient_email||"";
+    const cc = card.querySelector('[data-f="cc"]'); if(cc) cc.value = a.cc_emails||"";
+    const bcc = card.querySelector('[data-f="bcc"]'); if(bcc) bcc.value = a.bcc_emails||"";
     const sub = card.querySelector('[data-f="subject"]'); if(sub) sub.value = a.subject||"";
     const bod = card.querySelector('[data-f="body"]'); if(bod) bod.value = a.body||"";
     const when = card.querySelector('[data-f="when"]'); if(when) when.min = localMin;
@@ -419,6 +486,8 @@ list.addEventListener("click", async (e)=>{
   const id = btn.dataset.id, action = btn.dataset.action, card = btn.closest(".ticket");
   const reads = () => ({
     recipient_email: card.querySelector('[data-f="recipient"]').value,
+    cc_emails: (card.querySelector('[data-f="cc"]')||{}).value || "",
+    bcc_emails: (card.querySelector('[data-f="bcc"]')||{}).value || "",
     subject: card.querySelector('[data-f="subject"]').value,
     body: card.querySelector('[data-f="body"]').value,
   });
@@ -452,6 +521,8 @@ list.addEventListener("click", async (e)=>{
       toast("Scheduled"); await loadQueue();
     } else if(action === "unschedule"){
       await api("POST","/applications/"+id+"/unschedule"); toast("Schedule canceled - back to drafts"); await loadQueue();
+    } else if(action === "applied"){
+      await api("POST","/applications/"+id+"/applied"); toast("Marked as applied"); await loadQueue();
     } else if(action === "prepare"){
       btn.disabled = true; btn.textContent = "Preparing...";
       await api("POST","/applications/"+id+"/prepare"); toast("Answers ready"); await loadQueue();
@@ -477,7 +548,6 @@ document.getElementById("alertsBtn").onclick = async ()=>{
   btn.disabled = false;
 };
 
-setInterval(loadQueue, 30000);
 loadProfile();
 loadQueue();
 </script>
