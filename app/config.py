@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     searlo_daily_credit_cap: int = 30           # hard backstop on search credits per day
     job_search_queries: str = ""                # seed queries (CSV)
 
+    # --- internal ingest (Vercel Cron entrypoint) ---
+    internal_ingest_secret: str = ""            # shared secret guarding POST /internal/ingest/*
+
 
 settings = Settings()
 
