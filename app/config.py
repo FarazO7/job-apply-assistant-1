@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     resume_path: str = ""
     crawl_interval_hours: int = 2
 
+    # --- internal ingest (Vercel Cron entrypoint) ---
+    internal_ingest_secret: str = ""            # shared secret guarding POST /internal/ingest/*
+
 
 settings = Settings()
 

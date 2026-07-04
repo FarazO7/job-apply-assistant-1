@@ -1,12 +1,13 @@
+import hmac
 from typing import Optional
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from bson import ObjectId
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 
-from . import gmail_client, ingest
+from . import gmail_client, ingest, productjobs_ingester
 from .config import settings
 from .db import applications, ensure_indexes, profiles
 from .models import DEFAULT_PROFILE, now, serialize
@@ -190,6 +191,28 @@ def update_profile(body: ProfileIn):
 @app.post("/ingest/alerts")
 def run_alert_ingest():
     return ingest.ingest_alerts()
+
+
+# ---- protected productjobs.in ingest (Vercel Cron entrypoint) ----
+# APScheduler cannot persist on Vercel's serverless runtime, so instead of a startup job we
+# expose ingest() behind a secret-guarded route that Vercel Cron can call on a schedule.
+# `verify` defaults to False: there is no Searlo e-mail verifier in this app, so addresses are
+# surfaced to the review queue rather than auto-vetted (see verify_email_via_searlo hook).
+@app.post("/internal/ingest/productjobs")
+def internal_ingest_productjobs(
+    search: str = "",
+    location: str = "",
+    verify: bool = False,
+    x_internal_ingest_secret: Optional[str] = Header(default=None),
+):
+    secret = settings.internal_ingest_secret
+    if not secret or not x_internal_ingest_secret or not hmac.compare_digest(
+        x_internal_ingest_secret, secret
+    ):
+        raise HTTPException(status_code=401, detail="unauthorised")
+    return productjobs_ingester.ingest(
+        applications, search=search, location=location, verify_emails=verify
+    )
 
 
 @app.get("/health")

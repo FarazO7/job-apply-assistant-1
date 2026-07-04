@@ -1,0 +1,9 @@
+# Vercel needs to be told which ASGI callable to serve. The build detects
+# app/api.py but not the `app` variable, hence the explicit entrypoint below.
+#
+# Dependencies are intentionally NOT declared here: requirements.txt remains
+# the single source of truth (it already lists httpx and pymongo), so adding a
+# [project] table would only risk Vercel switching resolvers and ignoring it.
+
+[tool.vercel]
+entrypoint = "app.api:app"
