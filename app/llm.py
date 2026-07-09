@@ -1,4 +1,5 @@
 import json
+import re
 
 from openai import OpenAI
 
@@ -38,8 +39,7 @@ _HUMANIZE = (
     "- Avoid three-item lists used for rhythm; use a natural number of items.\n"
     "- No em dashes for effect (use commas or periods), no emojis, no bold, sentence case.\n"
     "- Cut filler (in order to -> to; due to the fact that -> because) and stacked hedging.\n"
-    "- No signposting openers (I am excited to, I hope this helps, Let me know). Start with substance.\n"
-    "- No grand closers (the future looks bright). End on something concrete.\n"
+    "- In the body, do not open with hype like \"I am excited to\" or \"I am thrilled\". Open with substance.\n"
     "- Vary sentence length and sound like a specific person, not a template."
 )
 
@@ -53,6 +53,10 @@ def _profile_block(profile, answers):
         + "\n\nSAVED ANSWERS - reuse these, never ask for anything already here (JSON):\n"
         + json.dumps(answers or {}, ensure_ascii=False, indent=2)
     )
+    bg = (profile.get("background") or "").strip()
+    if bg:
+        block += ("\n\nKEY WINS / BACKGROUND (draw on the points relevant to the post; "
+                  "use at most one specific achievement in an email):\n###\n" + bg[:4000] + "\n###")
     resume = (profile.get("resume_text") or "").strip()
     if resume:
         block += "\n\nFULL RESUME TEXT (pull only the points relevant to this role):\n###\n" + resume[:6000] + "\n###"
@@ -60,13 +64,64 @@ def _profile_block(profile, answers):
 
 
 _EMAIL_RULES = (
-    "Write subject + body for an application email: first person as the candidate, warm but plain, "
-    "110-160 words. Name the exact role and company, use 2-3 specific points from the resume that match "
-    "the post, and sign off with the candidate's name and phone on separate lines. No [placeholders]. "
-    "If saved answers mark the candidate an immediate joiner, you may note availability.\n"
-    "missing_info = facts that would materially strengthen the email but are absent from profile and "
-    "saved answers (e.g. expected_ctc, notice_period). Empty list if none.\n\n" + _HUMANIZE
+    "Write only the BODY of a SHORT application email: two short paragraphs, about 60-90 words total. "
+    "Do NOT write a greeting line, and do NOT write any sign-off, name, or phone number — those are added "
+    "automatically, so writing them yourself will duplicate them. Write the paragraphs only.\n"
+    "- First person as the candidate, plain and warm. Name the exact role and company. Include at most ONE "
+    "specific achievement from the candidate's background or skills, and only if it matches something the post "
+    "asks for; otherwise keep it general. No [placeholders].\n"
+    "- If saved answers mark the candidate an immediate joiner, you may note availability in one short clause.\n"
+    "missing_info = facts that would materially strengthen the email but are absent from profile and saved answers "
+    "(e.g. expected_ctc, notice_period). Empty list if none.\n\n"
+    + _HUMANIZE
 )
+
+_GREETING_RE = re.compile(r"^(dear|hi|hello|hey|greetings)\b", re.I)
+_SIGNOFF_STARTS = (
+    "best regards", "kind regards", "warm regards", "regards", "best,", "sincerely",
+    "thanks", "thank you", "yours ", "cheers",
+)
+
+
+def _finalize_email(body, profile, contact_name=""):
+    """Guarantee a greeting and a proper sign-off, regardless of what the model returned."""
+    name = (profile.get("name") or "").strip()
+    phone = (profile.get("phone") or "").strip()
+    name_l = name.lower()
+    phone_digits = re.sub(r"\D", "", phone)
+
+    def _is_sig(s):
+        t = s.strip()
+        if not t:
+            return True
+        tl = t.lower()
+        if tl.startswith(_SIGNOFF_STARTS):
+            return True
+        if name_l and tl == name_l:
+            return True
+        d = re.sub(r"\D", "", t)
+        if phone_digits and len(d) >= 7 and d == phone_digits:
+            return True
+        return False
+
+    lines = (body or "").strip().split("\n")
+    while lines and not lines[0].strip():                 # drop leading blanks
+        lines.pop(0)
+    if lines and _GREETING_RE.match(lines[0].strip()):    # drop a greeting the model added anyway
+        lines.pop(0)
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and _is_sig(lines[-1]):                   # drop any trailing signature the model added
+        lines.pop()
+    core = "\n".join(lines).strip()
+
+    greeting = f"Dear {contact_name.strip()}," if (contact_name or "").strip() else "Dear Hiring Manager,"
+    signoff = "Best regards,"
+    if name:
+        signoff += "\n" + name
+    if phone:
+        signoff += "\n" + phone
+    return greeting + "\n\n" + core + "\n\n" + signoff
 
 
 def parse_and_write_post(text, profile, answers):
@@ -75,18 +130,26 @@ def parse_and_write_post(text, profile, answers):
         + _profile_block(profile, answers)
         + "\n\nHIRING POST:\n###\n" + text + "\n###\n\n"
         "Do all of this:\n"
-        "1. Extract EVERY email address the post says to send the application to, as a list in "
-        "recipient_emails. If the post explicitly says to CC an address, put it in cc_emails; if it says "
-        "to BCC an address, put it in bcc_emails. Use empty lists when there are none.\n"
-        "2. Extract company name and every role listed with its experience range.\n"
+        "1. Extract EVERY email address the post says to send the application to into recipient_emails. "
+        "Strip any 'mailto:' prefix and surrounding brackets — an address written as "
+        "[name@co.com](mailto:name@co.com) is just name@co.com. If the post explicitly says to CC an "
+        "address put it in cc_emails; if it says to BCC an address put it in bcc_emails. Empty lists if none.\n"
+        "   Separately, set email_explicit true ONLY if a complete, unambiguous address was literally present. "
+        "If one looks truncated/cut-off, obfuscated (e.g. 'name [at] co dot com'), or you had to guess it, still "
+        "extract what you can into recipient_emails but set email_explicit false.\n"
+        "   Set is_hiring true only if this is genuinely a job/hiring post.\n"
+        "2. Extract company name and every role listed with its experience range. Also set contact_name to the "
+        "specific person the post names to apply to, if any (e.g. 'Ruchi'); otherwise \"\".\n"
         "3. Choose the single role that best fits the candidate; put it in chosen_role, the rest in other_roles.\n"
         "4. " + _EMAIL_RULES + "\n\n"
         "Return ONLY JSON, no markdown:\n"
-        '{"recipient_emails":[],"cc_emails":[],"bcc_emails":[],"company":"",'
-        '"roles":[{"title":"","experience":""}],"chosen_role":"","other_roles":[],'
+        '{"recipient_emails":[],"email_explicit":false,"is_hiring":true,"cc_emails":[],"bcc_emails":[],"company":"",'
+        '"contact_name":"","roles":[{"title":"","experience":""}],"chosen_role":"","other_roles":[],'
         '"subject":"","body":"","missing_info":[{"key":"","label":""}]}'
     )
-    return _parse_json(_ask(prompt))
+    data = _parse_json(_ask(prompt))
+    data["body"] = _finalize_email(data.get("body", ""), profile, data.get("contact_name", ""))
+    return data
 
 
 def parse_alert(text):
@@ -111,7 +174,9 @@ def write_email_for_listing(listing, profile, answers):
         "Return ONLY JSON, no markdown:\n"
         '{"subject":"","body":"","missing_info":[{"key":"","label":""}]}'
     )
-    return _parse_json(_ask(prompt))
+    data = _parse_json(_ask(prompt))
+    data["body"] = _finalize_email(data.get("body", ""), profile)
+    return data
 
 
 def parse_resume(text):
@@ -129,7 +194,7 @@ def parse_resume(text):
 def draft_application_answers(context_text, profile, answers):
     prompt = (
         "A job uses a web form or apply link (no email). Draft short, ready-to-paste answers to the questions "
-        "such a form usually asks, tailored to the post using the candidate's resume.\n\n"
+        "such a form usually asks, tailored to the post using the candidate's background and resume.\n\n"
         + _profile_block(profile, answers)
         + "\n\nPOST / LISTING:\n###\n" + (context_text or "")[:4000] + "\n###\n\n"
         "Cover at least: why this role and company, most relevant experience, notice period, expected CTC, "
